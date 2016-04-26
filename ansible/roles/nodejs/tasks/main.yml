@@ -1,0 +1,57 @@
+---
+- include: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+# - name: Define nodejs_install_npm_user
+#   set_fact:
+#     nodejs_install_npm_user: "{{ ansible_ssh_user }}"
+#   when: nodejs_install_npm_user is not defined
+
+# # TODO: Remove this task after Ansible 2.x npm module bug is fixed. See:
+# # https://github.com/ansible/ansible-modules-extras/issues/1375
+# - name: Ensure npm global packages are installed.
+#   npm:
+#     name: "{{ item.name }}"
+#     version: "{{ item.version | default('') }}"
+#     global: yes
+#     state: present
+#   become: yes
+#   become_user: "{{ nodejs_install_npm_user }}"
+#   with_items: "{{ nodejs_npm_global_packages }}"
+
+#- name: Install bower,grunt,grunt-cli
+#  sudo: true
+#  shell: npm install -g grunt grunt-cli bower --allow-root
+#  tags:
+#    - globle
+
+- name: Install Bower and Grunt
+  sudo: true
+  npm: name={{ item }} state=present global=yes
+  with_items:
+  - bower
+  - grunt
+  - grunt-cli
+
+- name: Install npm in {{playbook_dir}}/src/OrphanAllocationApplication
+  npm: path={{playbook_dir}}/src/OrphanAllocationApplication state=present
+  tags:
+   - package.json
+
+- name: Install bower in {{playbook_dir}}/src/OrphanAllocationApplication
+#  sudo: true
+#  shell: cd {{playbook_dir}}/src/OrphanAllocationApplication && sudo bower install --allow-root option
+  bower: path={{playbook_dir}}/src/OrphanAllocationApplication state=present
+  tags:
+    - bower
+
+- name: Start NodeJS application
+  sudo: true
+  shell: cd {{playbook_dir}}/src/OrphanAllocationApplication && nohup grunt run &
+  tags:
+    - grunt
+
+

@@ -1,0 +1,5 @@
+---
+- hosts: appserver
+  sudo: yes
+  roles:
+    - role: client

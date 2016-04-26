@@ -1,0 +1,23 @@
+- name: Add Oracle Java sources to apt-get
+  sudo: true
+  apt_repository: repo='ppa:webupd8team/java'
+  tags:
+    - libs
+    - provision
+    - common
+
+- name: Automatically select the Oracle License (for Java)
+  sudo: true
+  shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+  tags:
+    - libs
+    - provision
+    - common
+    
+- name: Install Oracle JDK 8
+  sudo: true
+  apt: name=oracle-java8-installer update-cache=yes force=yes
+  tags:
+    - libs
+    - provision
+    - common

@@ -1,0 +1,54 @@
+- name: create /opt directory
+  sudo: true
+  shell: mkdir -p /opt/downloads
+
+- name: Check PLAY archive exist or not
+  stat: path=/opt/downloads/typesafe-activator-1.3.10-minimal.zip
+  register: play_check_rule
+
+- name: Check SBT archive exist or not
+  stat: path=/opt/downloads/sbt-0.13.5
+  register: sbt_check_rule      
+
+- name: Check SCALA archive exist or not
+  stat: path=/opt/downloads/scala-2.11.6.tgz
+  register: scala_check_rule            
+
+- name: download PLAY framework
+  sudo: true
+  when: play_check_rule.stat.exists == False      
+  get_url: url=http://downloads.typesafe.com/typesafe-activator/1.3.10/typesafe-activator-1.3.10-minimal.zip dest=/opt/downloads mode=0440
+
+- name: download SBT framework
+  sudo: true
+  when: sbt_check_rule.stat.exists == False    
+  get_url: url=http://dl.bintray.com/sbt/native-packages/sbt/0.13.5/sbt-0.13.5.zip dest=/opt/downloads mode=0440
+
+
+- name: download Scala framework
+  when: scala_check_rule.stat.exists == False
+  sudo: true
+  get_url: url=http://downloads.lightbend.com/scala/2.11.6/scala-2.11.6.tgz dest=/opt/downloads mode=0440
+
+- name: create {{playbook_dir}}/lib directory {{ansible_user_id}}
+#  sudo: true
+  shell: mkdir -p {{playbook_dir}}/lib
+
+- name: Unarchive PLAY framework
+  unarchive: src=/opt/downloads/typesafe-activator-1.3.10-minimal.zip dest={{playbook_dir}}/lib copy=no
+
+- name: Unarchive SBT framework
+  unarchive: src=/opt/downloads/sbt-0.13.5.zip dest={{playbook_dir}}/lib copy=no
+
+- name: Unarchive SCALA framework
+  unarchive: src=/opt/downloads/scala-2.11.6.tgz dest={{playbook_dir}}/lib copy=no
+
+- name: Adding {{playbook_dir}}/lib/sbt/bin path in the bashrc
+  lineinfile: dest=/home/{{ansible_user_id}}/.bashrc line='export PATH=$PATH:{{playbook_dir}}/lib/sbt/bin:{{playbook_dir}}/lib/scala-2.11.6/bin:{{playbook_dir}}/lib/typesafe-activator-1.3.10-minimal/bin' insertafter='EOF' regexp='export PATH=\$PATH:{{playbook_dir}}/lib/sbt/bin:{{playbook_dir}}/lib/scala-2.11.6/bin:{{playbook_dir}}/lib/typesafe-activator-1.3.10-minimal/bin' state=present
+
+- name: Source the bash_profile file
+  sudo: true
+  shell: source /home/{{ansible_user_id}}/.bashrc
+  args:
+     executable: /bin/bash      
+
